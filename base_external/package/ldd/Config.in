@@ -1,0 +1,5 @@
+config BR2_PACKAGE_LDD
+	bool "ldd"
+	help
+	  Template package entry for LDD.
+	  Update base_external/package/ldd/ldd.mk with your source and build steps.

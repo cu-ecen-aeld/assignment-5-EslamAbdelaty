@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# load ldd modules
+set -e
+case "$1" in
+    start)
+        if grep -q '^staff:' /etc/group; then
+            group="staff"
+        else
+            group="wheel"
+        fi
+        echo " Loading scull module "
+    
+        modprobe scull 
+        # retrieve major number
+        major=$(awk "\$2==\"scull\" {print \$1}" /proc/devices)
+
+        # create devices
+        mknod /dev/scull0 c $major 0
+        mknod /dev/scull1 c $major 1
+        mknod /dev/scull2 c $major 2
+        mknod /dev/scull3 c $major 3
+
+        chgrp $group /dev/scull[0-3]
+        chmod 666 /dev/scull[0-3]
+
+        echo "loading  Faulty modules" 
+        modprobe faulty
+
+        major=$(awk "\$2==\"faulty\" {print \$1}" /proc/devices)
+        mknod /dev/faulty c $major 0
+
+        chgrp $group /dev/faulty
+        chmod 666 /dev/faulty
+
+        echo "Loading Hello modules"
+        modprobe hello
+
+        ;;
+    stop)
+        rmmod scull
+        rmmod faulty
+        rmmod hello
+        ;;
+    restart)
+        $0 stop
+        $0 start
+    ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac
